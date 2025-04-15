@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Meeting Analysis Agent</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        .container {
+            max-width: 800px;
+            margin-top: 2rem;
+        }
+        .result-section {
+            margin-top: 2rem;
+            display: none;
+        }
+        .loading {
+            display: none;
+            text-align: center;
+            margin: 2rem 0;
+        }
+        .file-warning {
+            display: none;
+            margin-top: 0.5rem;
+        }
+        .progress {
+            margin-top: 1rem;
+            display: none;
+        }
+        .tab-content {
+            padding: 1.5rem;
+            border: 1px solid #dee2e6;
+            border-top: none;
+            border-radius: 0 0 0.25rem 0.25rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1 class="text-center mb-4">Meeting Analysis Agent</h1>
+        <p class="lead text-center mb-4">Upload a meeting audio file to analyze and extract insights, action items, and bullet points.</p>
+        
+        <div class="card">
+            <div class="card-body">
+                <form id="uploadForm">
+                    <div class="mb-3">
+                        <label for="audioFile" class="form-label">Upload Audio File</label>
+                        <input class="form-control" type="file" id="audioFile" name="audio_file" accept="audio/*,video/*" required>
+                        <div class="form-text">Supported formats: MP3, WAV, M4A, MP4, etc.</div>
+                        <div id="fileWarning" class="alert alert-warning file-warning">
+                            <strong>Large file detected!</strong> Files larger than 25MB will be processed in chunks, which may take longer.
+                        </div>
+                    </div>
+                    <button type="submit" class="btn btn-primary w-100">Analyze Meeting</button>
+                </form>
+            </div>
+        </div>
+        
+        <div id="loading" class="loading">
+            <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Loading...</span>
+            </div>
+            <p class="mt-2" id="loadingMessage">Processing your meeting audio. This may take a few minutes...</p>
+            <div class="progress" id="progressBar">
+                <div class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar" style="width: 0%"></div>
+            </div>
+        </div>
+        
+        <div id="results" class="result-section">
+            <ul class="nav nav-tabs" id="resultTabs" role="tablist">
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link active" id="transcript-tab" data-bs-toggle="tab" data-bs-target="#transcript" type="button" role="tab">Transcript</button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="insights-tab" data-bs-toggle="tab" data-bs-target="#insights" type="button" role="tab">Insights</button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="actions-tab" data-bs-toggle="tab" data-bs-target="#actions" type="button" role="tab">Action Items</button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="bullets-tab" data-bs-toggle="tab" data-bs-target="#bullets" type="button" role="tab">Bullet Points</button>
+                </li>
+            </ul>
+            <div class="tab-content" id="resultTabsContent">
+                <div class="tab-pane fade show active" id="transcript" role="tabpanel" tabindex="0">
+                    <h3>Meeting Transcript</h3>
+                    <div id="transcriptContent" class="border p-3 bg-light"></div>
+                </div>
+                <div class="tab-pane fade" id="insights" role="tabpanel" tabindex="0">
+                    <h3>Key Insights</h3>
+                    <div id="insightsContent" class="border p-3 bg-light"></div>
+                </div>
+                <div class="tab-pane fade" id="actions" role="tabpanel" tabindex="0">
+                    <h3>Action Items</h3>
+                    <div id="actionsContent" class="border p-3 bg-light"></div>
+                </div>
+                <div class="tab-pane fade" id="bullets" role="tabpanel" tabindex="0">
+                    <h3>Bullet Points</h3>
+                    <div id="bulletsContent" class="border p-3 bg-light"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script>
+        // Helper function to safely parse markdown
+        function safelyParseMarkdown(text) {
+            if (!text) return "No content available";
+            try {
+                return marked.parse(text);
+            } catch (error) {
+                console.error("Error parsing markdown:", error);
+                return text || "Error parsing content";
+            }
+        }
+        
+        // File size check
+        document.getElementById('audioFile').addEventListener('change', function(e) {
+            const file = this.files[0];
+            if (file) {
+                // Show warning for files larger than 25MB
+                const fileWarning = document.getElementById('fileWarning');
+                const fileSizeMB = file.size / (1024 * 1024);
+                
+                if (fileSizeMB > 25) {
+                    fileWarning.style.display = 'block';
+                    // Update warning message with file size
+                    fileWarning.innerHTML = `<strong>Large file detected (${fileSizeMB.toFixed(1)} MB)!</strong> Files larger than 25MB will be processed in chunks, which may take longer.`;
+                    
+                    // If file is extremely large, add additional warning
+                    if (fileSizeMB > 100) {
+                        fileWarning.innerHTML += '<br>This file is very large and may take several minutes to process.';
+                    }
+                } else {
+                    fileWarning.style.display = 'none';
+                }
+            }
+        });
+
+        // Simulate progress for large files
+        function simulateProgress() {
+            const progressBar = document.querySelector('#progressBar .progress-bar');
+            let width = 0;
+            const interval = setInterval(() => {
+                if (width >= 95) {
+                    clearInterval(interval);
+                    return;
+                }
+                
+                // Slower progress as the bar gets closer to 100%
+                const increment = width < 50 ? 5 : (width < 80 ? 2 : 0.5);
+                width += increment;
+                progressBar.style.width = width + '%';
+            }, 1000);
+            
+            return interval;
+        }
+        
+        document.getElementById('uploadForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const audioInput = document.getElementById('audioFile');
+            
+            if (!audioInput.files.length) {
+                alert('Please select an audio file');
+                return;
+            }
+            
+            const formData = new FormData();
+            formData.append('audio_file', audioInput.files[0]);
+            
+            // Show loading indicator
+            const loadingElement = document.getElementById('loading');
+            const loadingMessage = document.getElementById('loadingMessage');
+            const progressBar = document.getElementById('progressBar');
+            loadingElement.style.display = 'block';
+            document.getElementById('results').style.display = 'none';
+            
+            // Check if file is large and show progress bar if it is
+            const file = audioInput.files[0];
+            const fileSizeMB = file.size / (1024 * 1024);
+            let progressInterval;
+            
+            if (fileSizeMB > 25) {
+                loadingMessage.textContent = 'Processing your large audio file. This may take several minutes...';
+                progressBar.style.display = 'block';
+                progressInterval = simulateProgress();
+            } else {
+                progressBar.style.display = 'none';
+            }
+            
+            try {
+                const response = await fetch('/analyze-meeting/', {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.detail || 'Error processing the audio file');
+                }
+                
+                const data = await response.json();
+                
+                // Safely set content with null/undefined checks
+                document.getElementById('transcriptContent').textContent = data.transcript || "No transcript available";
+                
+                // Use the safelyParseMarkdown function to handle potential null/undefined values
+                document.getElementById('insightsContent').innerHTML = safelyParseMarkdown(data.analysis.insights);
+                document.getElementById('actionsContent').innerHTML = safelyParseMarkdown(data.analysis.action_items);
+                document.getElementById('bulletsContent').innerHTML = safelyParseMarkdown(data.analysis.bullet_points);
+                
+                // Show results container
+                document.getElementById('results').style.display = 'block';
+            } catch (error) {
+                alert('Error: ' + error.message);
+            } finally {
+                // Clear progress interval if it exists
+                if (progressInterval) {
+                    clearInterval(progressInterval);
+                }
+                
+                // Hide loading indicator
+                loadingElement.style.display = 'none';
+            }
+        });
+    </script>
+</body>
+</html> 
