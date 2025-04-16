@@ -4,7 +4,7 @@ from agno.models.openai import OpenAIChat
 class MeetingAnalyzer:
     """Handles analysis of meeting transcripts using Agno AI agents."""
     
-    def __init__(self, model_id="gpt-3.5-turbo-0125", chunk_size=10000, overlap=1000):
+    def __init__(self, model_id="gpt-4.1", chunk_size=10000, overlap=1000):
         """Initialize the meeting analyzer.
         
         Args:
