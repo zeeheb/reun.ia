@@ -1,3 +1,4 @@
+from analysis_mock import analysis_mock
 from transcript_mock import transcript_mock
 import os
 import tempfile
@@ -106,7 +107,8 @@ async def analyze_meeting(audio_file: UploadFile = File(...)):
         
         # Step 2: Analyze the transcript
         print("Starting analysis...")
-        analysis_results = analyzer.analyze_transcript(transcript)
+        # analysis_results = analyzer.analyze_transcript(transcript) ## mocked for now
+        analysis_results = analysis_mock
         print(analysis_results)
         print("Analysis complete")
         
