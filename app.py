@@ -9,9 +9,15 @@ from fastapi.responses import JSONResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
 import uvicorn
+from dotenv import load_dotenv
+import pathlib
 
 from transcription import AudioTranscriber
 from meeting_analysis import MeetingAnalyzer
+
+# Load environment variables from .env.local file
+env_path = pathlib.Path('.') / '.env.local'
+load_dotenv(dotenv_path=env_path)
 
 # Check if API key exists
 if not os.environ.get("OPENAI_API_KEY"):
@@ -80,8 +86,8 @@ async def analyze_meeting(audio_file: UploadFile = File(...)):
         
         # Step 1: Transcribe the audio
         print("Starting transcription...")
-        # transcript = transcriber.transcribe(temp_file_path) // for now, we'll use a mock transcript
-        transcript = transcript_mock
+        transcript = transcriber.transcribe(temp_file_path) # for now, we'll use a mock transcript
+        # transcript = transcript_mock
         
         
         # Check if transcription was successful
