@@ -86,8 +86,8 @@ async def analyze_meeting(audio_file: UploadFile = File(...)):
         
         # Step 1: Transcribe the audio
         print("Starting transcription...")
-        transcript = transcriber.transcribe(temp_file_path) # for now, we'll use a mock transcript
-        # transcript = transcript_mock
+        # transcript = transcriber.transcribe(temp_file_path) # for now, we'll use a mock transcript
+        transcript = transcript_mock
         
         
         # Check if transcription was successful
@@ -107,6 +107,7 @@ async def analyze_meeting(audio_file: UploadFile = File(...)):
         # Step 2: Analyze the transcript
         print("Starting analysis...")
         analysis_results = analyzer.analyze_transcript(transcript)
+        print(analysis_results)
         print("Analysis complete")
         
         # Return the full analysis with transcript included
