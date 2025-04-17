@@ -3,6 +3,8 @@ import streamlit as st
 import tempfile
 import shutil
 import time
+import ffmpeg
+import base64
 from typing import Dict, Optional
 from dotenv import load_dotenv
 import pathlib
@@ -54,12 +56,24 @@ def save_uploaded_file(uploaded_file):
         st.error(f"Error saving file: {e}")
         return None
 
+
+
+def cleanup_temp_files():
+    """Clean up temporary files created during audio processing"""
+    if 'trimmed_path' in st.session_state and os.path.exists(st.session_state['trimmed_path']):
+        try:
+            os.unlink(st.session_state['trimmed_path'])
+            del st.session_state['trimmed_path']
+        except Exception as e:
+            print(f"Error cleaning up trimmed file: {e}")
+
 def process_audio(audio_file_path):
     """Process audio file and return analysis results"""
     try:
         # Get file size in MB for logging
         file_size_mb = os.path.getsize(audio_file_path) / (1024 * 1024)
         
+
         # Create progress container
         progress_container = st.empty()
         progress_container.info(f"Processing audio file of size {file_size_mb:.2f} MB")
@@ -116,8 +130,8 @@ def process_audio(audio_file_path):
         return None
     
     finally:
-        # Clean up the temporary file
-        if os.path.exists(audio_file_path):
+        # Clean up the temporary file if it's not already being managed elsewhere
+        if os.path.exists(audio_file_path) and audio_file_path != st.session_state.get('trimmed_path'):
             os.remove(audio_file_path)
 
 def display_results(results):
@@ -234,6 +248,73 @@ def analyze_text_input():
             
         st.markdown('</div>', unsafe_allow_html=True)
 
+def trim_audio_file(audio_file_path, start_time, duration):
+    """Trim audio file to specified length using ffmpeg.
+    
+    Args:
+        audio_file_path (str): Path to the original audio file
+        start_time (float): Start time in seconds
+        duration (float): Duration in seconds
+        
+    Returns:
+        str: Path to the trimmed audio file
+    """
+    # Create a temporary file for the trimmed audio
+    file_ext = os.path.splitext(audio_file_path)[1]
+    temp_file = tempfile.NamedTemporaryFile(delete=False, suffix=file_ext)
+    temp_file.close()
+    
+    try:
+        # Use ffmpeg to trim the audio
+        (
+            ffmpeg
+            .input(audio_file_path, ss=start_time, t=duration)
+            .output(temp_file.name)
+            .run(quiet=True, overwrite_output=True)
+        )
+        return temp_file.name
+    except Exception as e:
+        if os.path.exists(temp_file.name):
+            os.unlink(temp_file.name)
+        raise Exception(f"Error trimming audio: {e}")
+
+def generate_waveform(audio_file_path, width=600, height=120):
+    """Generate audio waveform image using ffmpeg.
+    
+    Args:
+        audio_file_path (str): Path to the audio file
+        width (int): Width of the waveform image
+        height (int): Height of the waveform image
+        
+    Returns:
+        str: Base64 encoded image data for the waveform
+    """
+    try:
+        # Create a temporary file for the waveform image
+        temp_file = tempfile.NamedTemporaryFile(delete=False, suffix=".png")
+        temp_file.close()
+        
+        # Generate waveform using ffmpeg
+        (
+            ffmpeg
+            .input(audio_file_path)
+            .filter('showwavespic', s=f'{width}x{height}')
+            .output(temp_file.name, vframes=1)
+            .run(quiet=True, overwrite_output=True)
+        )
+        
+        # Read the image file and convert to base64
+        with open(temp_file.name, "rb") as img_file:
+            img_data = base64.b64encode(img_file.read()).decode()
+        
+        # Clean up the temporary file
+        os.unlink(temp_file.name)
+        
+        return img_data
+    except Exception as e:
+        print(f"Error generating waveform: {e}")
+        return None
+
 def main():
     """Main function for the Streamlit app"""
     
@@ -242,6 +323,9 @@ def main():
         load_css()
     except Exception as e:
         print(f"Could not load custom CSS: {e}")
+    
+    # Clean up any temporary files from previous sessions
+    cleanup_temp_files()
     
     # Title and description with custom CSS class
     st.markdown('<h1 class="main-title">Meeting Analysis Agent</h1>', unsafe_allow_html=True)
@@ -279,6 +363,30 @@ def main():
             file_size_mb = uploaded_file.size / (1024 * 1024)
             st.write(f"File: **{uploaded_file.name}** ({file_size_mb:.2f} MB)")
             
+            # Save the uploaded file temporarily to get metadata
+            temp_file_path = save_uploaded_file(uploaded_file)
+            if temp_file_path:
+             
+                
+                
+                    
+                  
+                    # Button to start analysis
+                    analyze_col1, analyze_col2 = st.columns([1, 3])
+                    with analyze_col1:
+                        analyze_button = st.button("Analyze Meeting", type="primary")
+                    
+                    if analyze_button:
+                        # Save the uploaded file temporarily
+                        temp_file_path = save_uploaded_file(uploaded_file)
+                        if temp_file_path:
+                            # Process the audio file
+                            results = process_audio(temp_file_path)
+                            
+                            # Display results
+                            if results:
+                                display_results(results)
+            
             # Check file size and show warning if large
             if file_size_mb > 25:
                 st.markdown(
@@ -288,22 +396,6 @@ def main():
                 )
                 if file_size_mb > 100:
                     st.warning("This file is very large and may take several minutes to process.")
-            
-            # Button to start analysis
-            analyze_col1, analyze_col2 = st.columns([1, 3])
-            with analyze_col1:
-                analyze_button = st.button("Analyze Meeting", type="primary")
-            
-            if analyze_button:
-                # Save the uploaded file temporarily
-                temp_file_path = save_uploaded_file(uploaded_file)
-                if temp_file_path:
-                    # Process the audio file
-                    results = process_audio(temp_file_path)
-                    
-                    # Display results
-                    if results:
-                        display_results(results)
         
         st.markdown('</div>', unsafe_allow_html=True)
     
@@ -311,10 +403,13 @@ def main():
     st.divider()
     
     # Add text analysis option
-    analyze_text_input()
+    # analyze_text_input()
     
     # Footer
-    st.markdown('<div class="footer">Meeting Analysis Agent - Powered by OpenAI</div>', unsafe_allow_html=True)
+    st.markdown('<div class="footer">Meeting Analysis Agent</div>', unsafe_allow_html=True)
+
+    # Before app exits, clean up temporary files
+    st.session_state['app_cleanup'] = cleanup_temp_files
 
 # Run the app
 if __name__ == "__main__":

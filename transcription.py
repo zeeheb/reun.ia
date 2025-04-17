@@ -1,6 +1,7 @@
 import os
 import tempfile
 import math
+import ffmpeg
 from pydub import AudioSegment
 import speech_recognition as sr
 from openai import OpenAI
@@ -23,7 +24,7 @@ class AudioTranscriber:
             self.client = OpenAI(api_key=os.environ.get("OPENAI_API_KEY"))
     
     def convert_to_wav(self, audio_file_path):
-        """Convert audio file to WAV format for compatibility.
+        """Convert audio file to WAV format for compatibility using ffmpeg.
         
         Args:
             audio_file_path (str): Path to the audio file
@@ -35,17 +36,40 @@ class AudioTranscriber:
         temp_file = tempfile.NamedTemporaryFile(delete=False, suffix=".wav")
         temp_file.close()
         
-        # Load the audio using pydub and export as WAV
         try:
-            audio = AudioSegment.from_file(audio_file_path)
-            audio.export(temp_file.name, format="wav")
+            # Use ffmpeg-python for more efficient conversion
+            (
+                ffmpeg
+                .input(audio_file_path)
+                .output(temp_file.name, acodec='pcm_s16le', ac=1, ar='16k')
+                .run(quiet=True, overwrite_output=True)
+            )
             return temp_file.name
         except Exception as e:
-            os.unlink(temp_file.name)
-            raise Exception(f"Error converting audio to WAV: {e}")
+            if os.path.exists(temp_file.name):
+                os.unlink(temp_file.name)
+            raise Exception(f"Error converting audio to WAV using ffmpeg: {e}")
+    
+    def get_audio_duration(self, audio_file_path):
+        """Get the duration of an audio file using ffmpeg.
+        
+        Args:
+            audio_file_path (str): Path to the audio file
+            
+        Returns:
+            float: Duration of the audio in seconds
+        """
+        try:
+            # Get audio file information using ffmpeg
+            probe = ffmpeg.probe(audio_file_path)
+            # Extract duration from the first audio stream
+            duration = float(probe['streams'][0]['duration'])
+            return duration
+        except Exception as e:
+            raise Exception(f"Error getting audio duration: {e}")
     
     def split_audio(self, audio_file_path):
-        """Split large audio file into smaller chunks that fit within API limits.
+        """Split large audio file into smaller chunks using ffmpeg.
         
         Args:
             audio_file_path (str): Path to the audio file
@@ -60,31 +84,42 @@ class AudioTranscriber:
         if file_size <= self.max_chunk_size:
             return [audio_file_path]
         
-        # Load the audio file
-        audio = AudioSegment.from_file(audio_file_path)
+        # Get the duration of the audio
+        duration = self.get_audio_duration(audio_file_path)
         
-        # Calculate the number of chunks needed
-        # Using duration-based splitting instead of size-based for more reliable results
-        duration_ms = len(audio)
-        # Estimate how many chunks we need based on file size ratio
+        # Calculate the number of chunks needed based on file size
         chunks_needed = math.ceil(file_size / self.max_chunk_size)
-        chunk_duration_ms = duration_ms // chunks_needed
+        # Duration of each chunk in seconds
+        chunk_duration = duration / chunks_needed
         
         # Create temporary directory for chunks
         temp_dir = tempfile.mkdtemp()
         chunk_paths = []
         
-        # Split the audio into chunks
+        # Split the audio into chunks using ffmpeg
         for i in range(chunks_needed):
-            start_ms = i * chunk_duration_ms
-            end_ms = min((i + 1) * chunk_duration_ms, duration_ms)
+            start_time = i * chunk_duration
+            # For the last chunk, use the full remaining duration
+            duration_arg = chunk_duration if i < chunks_needed - 1 else (duration - start_time)
             
-            chunk = audio[start_ms:end_ms]
-            
-            # Save the chunk to a temporary file
+            # Create the output path for this chunk
             chunk_path = os.path.join(temp_dir, f"chunk_{i}.wav")
-            chunk.export(chunk_path, format="wav")
-            chunk_paths.append(chunk_path)
+            
+            try:
+                # Use ffmpeg to extract the chunk
+                (
+                    ffmpeg
+                    .input(audio_file_path, ss=start_time, t=duration_arg)
+                    .output(chunk_path, acodec='pcm_s16le', ac=1, ar='16k')
+                    .run(quiet=True, overwrite_output=True)
+                )
+                chunk_paths.append(chunk_path)
+            except Exception as e:
+                # Clean up created chunks on error
+                for path in chunk_paths:
+                    if os.path.exists(path):
+                        os.unlink(path)
+                raise Exception(f"Error splitting audio with ffmpeg: {e}")
         
         return chunk_paths
     
