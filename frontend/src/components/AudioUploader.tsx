@@ -64,11 +64,11 @@ export default function AudioUploader({ onFileSelect, isLoading }: AudioUploader
   };
 
   return (
-    <div className="bg-white shadow rounded-lg p-4 mb-6">
-      <h2 className="text-lg font-medium text-gray-900 mb-3">Upload Meeting Recording</h2>
+    <div className="bg-white shadow rounded-lg p-3 sm:p-4 mb-6">
+      <h2 className="text-base sm:text-lg font-medium text-gray-900 mb-2 sm:mb-3">Upload Meeting Recording</h2>
       
       <div
-        className={`border-2 border-dashed rounded-lg p-6 flex flex-col items-center justify-center cursor-pointer transition-colors ${
+        className={`border-2 border-dashed rounded-lg p-4 sm:p-6 flex flex-col items-center justify-center cursor-pointer transition-colors ${
           dragActive 
             ? 'border-indigo-500 bg-indigo-50' 
             : 'border-gray-300 hover:border-indigo-400 hover:bg-indigo-50/50'
@@ -80,7 +80,7 @@ export default function AudioUploader({ onFileSelect, isLoading }: AudioUploader
         onClick={handleButtonClick}
       >
         <svg 
-          className={`w-12 h-12 mb-3 ${dragActive ? 'text-indigo-500' : 'text-gray-400'}`} 
+          className={`w-8 h-8 sm:w-12 sm:h-12 mb-2 sm:mb-3 ${dragActive ? 'text-indigo-500' : 'text-gray-400'}`} 
           fill="none" 
           stroke="currentColor" 
           viewBox="0 0 24 24" 
@@ -104,17 +104,17 @@ export default function AudioUploader({ onFileSelect, isLoading }: AudioUploader
           disabled={isLoading}
         />
         
-        <p className="mb-2 text-sm text-gray-500">
+        <p className="mb-1 sm:mb-2 text-xs sm:text-sm text-center text-gray-500">
           <span className="font-semibold">Click to upload</span> or drag and drop
         </p>
-        <p className="text-xs text-gray-500">MP3, WAV, MP4, etc. (max. 100MB)</p>
+        <p className="text-xs text-center text-gray-500">MP3, WAV, MP4, etc. (max. 100MB)</p>
       </div>
 
       {selectedFile && (
-        <div className="mt-4 bg-gray-50 p-3 rounded-md">
+        <div className="mt-3 sm:mt-4 bg-gray-50 p-2 sm:p-3 rounded-md overflow-hidden">
           <div className="flex items-center">
             <svg 
-              className="h-6 w-6 text-gray-500 mr-2" 
+              className="h-5 w-5 sm:h-6 sm:w-6 text-gray-500 mr-2 flex-shrink-0" 
               fill="none" 
               stroke="currentColor" 
               viewBox="0 0 24 24" 
@@ -128,7 +128,7 @@ export default function AudioUploader({ onFileSelect, isLoading }: AudioUploader
               />
             </svg>
             <div className="ml-2 flex-1 min-w-0">
-              <p className="text-sm font-medium text-gray-900 truncate">
+              <p className="text-xs sm:text-sm font-medium text-gray-900 truncate">
                 {selectedFile.name}
               </p>
               <p className="text-xs text-gray-500">
@@ -136,10 +136,10 @@ export default function AudioUploader({ onFileSelect, isLoading }: AudioUploader
               </p>
             </div>
             {isLoading && (
-              <div className="animate-pulse flex space-x-1">
-                <div className="h-2 w-2 bg-indigo-500 rounded-full"></div>
-                <div className="h-2 w-2 bg-indigo-500 rounded-full"></div>
-                <div className="h-2 w-2 bg-indigo-500 rounded-full"></div>
+              <div className="animate-pulse flex space-x-1 flex-shrink-0">
+                <div className="h-1.5 w-1.5 sm:h-2 sm:w-2 bg-indigo-500 rounded-full"></div>
+                <div className="h-1.5 w-1.5 sm:h-2 sm:w-2 bg-indigo-500 rounded-full"></div>
+                <div className="h-1.5 w-1.5 sm:h-2 sm:w-2 bg-indigo-500 rounded-full"></div>
               </div>
             )}
           </div>

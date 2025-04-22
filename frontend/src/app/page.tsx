@@ -109,16 +109,16 @@ export default function Home() {
   return (
     <main className="min-h-screen bg-gray-50 flex flex-col">
       <header className="bg-white shadow">
-        <div className="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8 flex justify-between items-center">
-          <h1 className="text-2xl font-bold text-gray-900">Meeting Analysis</h1>
+        <div className="max-w-7xl mx-auto py-4 sm:py-6 px-4 sm:px-6 lg:px-8 flex flex-wrap justify-between items-center">
+          <h1 className="text-xl sm:text-2xl font-bold text-gray-900 break-words">Meeting Analysis</h1>
           <a
             href="https://github.com/yourusername/meeting-analysis"
             target="_blank"
             rel="noopener noreferrer"
-            className="text-gray-500 hover:text-gray-700"
+            className="text-gray-500 hover:text-gray-700 mt-2 sm:mt-0"
           >
             <svg
-              className="h-6 w-6"
+              className="h-5 w-5 sm:h-6 sm:w-6"
               fill="currentColor"
               viewBox="0 0 24 24"
               aria-hidden="true"
@@ -133,18 +133,18 @@ export default function Home() {
         </div>
       </header>
 
-      <div className="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8 flex-grow">
-        <div className="bg-white shadow rounded-lg p-4 mb-6">
+      <div className="w-full max-w-7xl mx-auto py-4 sm:py-6 px-4 sm:px-6 lg:px-8 flex-grow">
+        <div className="max-w-2xl mx-auto bg-white shadow rounded-lg p-3 sm:p-4 mb-6 overflow-hidden">
           <ApiKeyInput onApiKeyChange={handleApiKeyChange} />
         </div>
 
         {/* Tabs for Upload/Input */}
-        <div className="bg-white shadow rounded-lg mb-6 overflow-hidden">
+        <div className="max-w-2xl mx-auto bg-white shadow rounded-lg mb-6 overflow-hidden">
           <div className="border-b border-gray-200">
-            <nav className="flex -mb-px">
+            <nav className="flex flex-nowrap -mb-px">
               <button
                 onClick={() => setActiveTab('upload')}
-                className={`py-4 px-6 text-center border-b-2 font-medium text-sm ${
+                className={`py-3 sm:py-4 px-3 sm:px-6 text-center border-b-2 font-medium text-xs sm:text-sm whitespace-nowrap ${
                   activeTab === 'upload'
                     ? 'border-indigo-500 text-indigo-600'
                     : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
@@ -154,7 +154,7 @@ export default function Home() {
               </button>
               <button
                 onClick={() => setActiveTab('transcript')}
-                className={`py-4 px-6 text-center border-b-2 font-medium text-sm ${
+                className={`py-3 sm:py-4 px-3 sm:px-6 text-center border-b-2 font-medium text-xs sm:text-sm whitespace-nowrap ${
                   activeTab === 'transcript'
                     ? 'border-indigo-500 text-indigo-600'
                     : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
@@ -165,7 +165,7 @@ export default function Home() {
             </nav>
           </div>
 
-          <div className="p-4">
+          <div className="p-3 sm:p-4">
             {activeTab === 'upload' ? (
               <div>
                 <AudioUploader onFileSelect={handleFileSelect} isLoading={loading} />
@@ -174,7 +174,7 @@ export default function Home() {
                     <button
                       onClick={handleFileAnalysis}
                       disabled={loading || !selectedFile}
-                      className={`px-4 py-2 rounded-md shadow-sm text-sm font-medium text-white focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 ${
+                      className={`px-3 sm:px-4 py-2 rounded-md shadow-sm text-xs sm:text-sm font-medium text-white focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 ${
                         loading || !selectedFile
                           ? 'bg-indigo-400 cursor-not-allowed'
                           : 'bg-indigo-600 hover:bg-indigo-700'
@@ -182,7 +182,7 @@ export default function Home() {
                     >
                       {loading ? (
                         <span className="flex items-center">
-                          <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" fill="none" viewBox="0 0 24 24">
+                          <svg className="animate-spin -ml-1 mr-2 h-3 w-3 sm:h-4 sm:w-4 text-white" fill="none" viewBox="0 0 24 24">
                             <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                             <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                           </svg>
@@ -203,11 +203,11 @@ export default function Home() {
 
         {/* Error Message */}
         {error && (
-          <div className="bg-red-50 border-l-4 border-red-400 p-4 mb-6">
+          <div className="max-w-2xl mx-auto bg-red-50 border-l-4 border-red-400 p-3 sm:p-4 mb-6 overflow-hidden">
             <div className="flex">
               <div className="flex-shrink-0">
                 <svg
-                  className="h-5 w-5 text-red-400"
+                  className="h-4 w-4 sm:h-5 sm:w-5 text-red-400"
                   xmlns="http://www.w3.org/2000/svg"
                   viewBox="0 0 20 20"
                   fill="currentColor"
@@ -221,19 +221,23 @@ export default function Home() {
                 </svg>
               </div>
               <div className="ml-3">
-                <p className="text-sm text-red-700">{error}</p>
+                <p className="text-xs sm:text-sm text-red-700 break-words">{error}</p>
               </div>
             </div>
           </div>
         )}
 
         {/* Analysis Results */}
-        {analysisResults && <AnalysisResults results={analysisResults} />}
+        {analysisResults && (
+          <div className="max-w-2xl mx-auto">
+            <AnalysisResults results={analysisResults} />
+          </div>
+        )}
       </div>
 
-      <footer className="bg-white">
-        <div className="max-w-7xl mx-auto py-4 px-4 sm:px-6 lg:px-8 border-t border-gray-200">
-          <p className="text-center text-sm text-gray-500">
+      <footer className="bg-white mt-auto">
+        <div className="max-w-7xl mx-auto py-3 sm:py-4 px-4 sm:px-6 lg:px-8 border-t border-gray-200">
+          <p className="text-center text-xs sm:text-sm text-gray-500">
             Meeting Analysis Tool. Powered by FastAPI and Next.js.
           </p>
         </div>

@@ -22,10 +22,10 @@ export default function AnalysisResults({ results }: AnalysisResultsProps) {
   return (
     <div className="bg-white shadow rounded-lg overflow-hidden">
       <div className="border-b border-gray-200">
-        <nav className="flex -mb-px">
+        <nav className="flex flex-nowrap -mb-px">
           <button
             onClick={() => setActiveTab('insights')}
-            className={`py-4 px-6 text-center border-b-2 font-medium text-sm ${
+            className={`py-3 sm:py-4 px-3 sm:px-6 text-center border-b-2 font-medium text-xs sm:text-sm whitespace-nowrap ${
               activeTab === 'insights'
                 ? 'border-indigo-500 text-indigo-600'
                 : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
@@ -35,7 +35,7 @@ export default function AnalysisResults({ results }: AnalysisResultsProps) {
           </button>
           <button
             onClick={() => setActiveTab('actions')}
-            className={`py-4 px-6 text-center border-b-2 font-medium text-sm ${
+            className={`py-3 sm:py-4 px-3 sm:px-6 text-center border-b-2 font-medium text-xs sm:text-sm whitespace-nowrap ${
               activeTab === 'actions'
                 ? 'border-indigo-500 text-indigo-600'
                 : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
@@ -45,7 +45,7 @@ export default function AnalysisResults({ results }: AnalysisResultsProps) {
           </button>
           <button
             onClick={() => setActiveTab('bullets')}
-            className={`py-4 px-6 text-center border-b-2 font-medium text-sm ${
+            className={`py-3 sm:py-4 px-3 sm:px-6 text-center border-b-2 font-medium text-xs sm:text-sm whitespace-nowrap ${
               activeTab === 'bullets'
                 ? 'border-indigo-500 text-indigo-600'
                 : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
@@ -55,7 +55,7 @@ export default function AnalysisResults({ results }: AnalysisResultsProps) {
           </button>
           <button
             onClick={() => setActiveTab('transcript')}
-            className={`py-4 px-6 text-center border-b-2 font-medium text-sm ${
+            className={`py-3 sm:py-4 px-3 sm:px-6 text-center border-b-2 font-medium text-xs sm:text-sm whitespace-nowrap ${
               activeTab === 'transcript'
                 ? 'border-indigo-500 text-indigo-600'
                 : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
@@ -66,31 +66,31 @@ export default function AnalysisResults({ results }: AnalysisResultsProps) {
         </nav>
       </div>
 
-      <div className="p-6">
+      <div className="p-3 sm:p-6">
         <div className={activeTab === 'insights' ? 'block' : 'hidden'}>
-          <h3 className="text-lg font-medium text-gray-900 mb-4">Key Insights</h3>
-          <div className="text-gray-700 text-sm whitespace-pre-line">
+          <h3 className="text-base sm:text-lg font-medium text-gray-900 mb-3 sm:mb-4">Key Insights</h3>
+          <div className="text-gray-700 text-xs sm:text-sm whitespace-pre-line break-words">
             {formatText(results.analysis.insights)}
           </div>
         </div>
 
         <div className={activeTab === 'actions' ? 'block' : 'hidden'}>
-          <h3 className="text-lg font-medium text-gray-900 mb-4">Action Items</h3>
-          <div className="text-gray-700 text-sm whitespace-pre-line">
+          <h3 className="text-base sm:text-lg font-medium text-gray-900 mb-3 sm:mb-4">Action Items</h3>
+          <div className="text-gray-700 text-xs sm:text-sm whitespace-pre-line break-words">
             {formatText(results.analysis.action_items)}
           </div>
         </div>
 
         <div className={activeTab === 'bullets' ? 'block' : 'hidden'}>
-          <h3 className="text-lg font-medium text-gray-900 mb-4">Meeting Summary</h3>
-          <div className="text-gray-700 text-sm whitespace-pre-line">
+          <h3 className="text-base sm:text-lg font-medium text-gray-900 mb-3 sm:mb-4">Meeting Summary</h3>
+          <div className="text-gray-700 text-xs sm:text-sm whitespace-pre-line break-words">
             {formatText(results.analysis.bullet_points)}
           </div>
         </div>
 
         <div className={activeTab === 'transcript' ? 'block' : 'hidden'}>
-          <div className="flex justify-between items-center mb-4">
-            <h3 className="text-lg font-medium text-gray-900">Transcript</h3>
+          <div className="flex justify-between items-center mb-3 sm:mb-4">
+            <h3 className="text-base sm:text-lg font-medium text-gray-900">Transcript</h3>
             <button
               onClick={() => {
                 navigator.clipboard.writeText(results.transcript);
@@ -98,7 +98,7 @@ export default function AnalysisResults({ results }: AnalysisResultsProps) {
               className="text-xs text-indigo-600 hover:text-indigo-800 flex items-center"
             >
               <svg 
-                className="h-4 w-4 mr-1" 
+                className="h-3 w-3 sm:h-4 sm:w-4 mr-1" 
                 fill="none" 
                 stroke="currentColor" 
                 viewBox="0 0 24 24" 
@@ -115,8 +115,8 @@ export default function AnalysisResults({ results }: AnalysisResultsProps) {
             </button>
           </div>
           
-          <div className="bg-gray-50 rounded-md p-4 max-h-96 overflow-y-auto">
-            <div className="text-gray-700 text-sm whitespace-pre-line">
+          <div className="bg-gray-50 rounded-md p-3 sm:p-4 max-h-80 sm:max-h-96 overflow-y-auto">
+            <div className="text-gray-700 text-xs sm:text-sm whitespace-pre-line break-words">
               {formatText(results.transcript)}
             </div>
           </div>
