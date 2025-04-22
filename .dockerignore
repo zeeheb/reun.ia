@@ -1,0 +1,39 @@
+# Git
+.git
+.gitignore
+
+# Environment
+.env*
+venv/
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+
+# Build artifacts
+*.egg-info/
+*.egg
+
+# Local development
+.devcontainer/
+.vscode/
+
+# Test files
+test_*.py
+*_mock.py
+
+# Docker
+Dockerfile
+.dockerignore
+
+# Data files that should not be included in the image
+uploads/*
+!uploads/.gitkeep
+
+# Other
+README.md
+API_DOCUMENTATION.md
+setup.sh
+setup.bat 
