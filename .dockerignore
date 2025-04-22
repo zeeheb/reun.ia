@@ -22,7 +22,7 @@ env/
 
 # Test files
 test_*.py
-*_mock.py
+# *_mock.py
 
 # Docker
 Dockerfile
