@@ -1,5 +1,6 @@
 from agno.agent import Agent
 from agno.models.openai import OpenAIChat
+import re
 
 class MeetingAnalyzer:
     """Handles analysis of meeting transcripts using Agno AI agents."""
@@ -18,12 +19,49 @@ class MeetingAnalyzer:
             instructions=[
                 "When analyzing meeting transcripts, focus on identifying key insights, action items, and important discussion points.",
                 "For Brazilian Portuguese content, understand cultural context and business terminology used in Brazil.",
-                "Always be concise and well-organized in your analysis output."
+                "Always be concise and well-organized in your analysis output.",
+                "Do not use HTML or markdown formatting in your responses. Use plain text only."
             ],
-            markdown=True
+            markdown=False
         )
         self.chunk_size = chunk_size
         self.overlap = overlap
+    
+    def _strip_html_markdown(self, text):
+        """Strip HTML and Markdown formatting from text.
+        
+        Args:
+            text (str): Text that may contain HTML or Markdown
+            
+        Returns:
+            str: Clean text without HTML or Markdown
+        """
+        if not text:
+            return text
+            
+        # Remove HTML tags
+        text = re.sub(r'<[^>]*>', '', text)
+        
+        # Convert markdown headers to plain text
+        text = re.sub(r'#{1,6}\s*(.*?)$', r'\1', text, flags=re.MULTILINE)
+        
+        # Remove markdown bold and italic formatting
+        text = re.sub(r'\*\*(.*?)\*\*', r'\1', text)
+        text = re.sub(r'\*(.*?)\*', r'\1', text)
+        text = re.sub(r'__(.*?)__', r'\1', text)
+        text = re.sub(r'_(.*?)_', r'\1', text)
+        
+        # Remove markdown links - keep the text, remove the URL
+        text = re.sub(r'\[(.*?)\]\(.*?\)', r'\1', text)
+        
+        # Convert markdown lists to plain text lists with consistent formatting
+        # Keep the bullet/number but standardize format
+        text = re.sub(r'^\s*[\*\-\+]\s+', '• ', text, flags=re.MULTILINE)
+        
+        # Standardize numbered lists
+        text = re.sub(r'^\s*(\d+)[\.\)]\s+', r'\1. ', text, flags=re.MULTILINE)
+        
+        return text
     
     def _split_transcript_into_chunks(self, transcript):
         """Split a large transcript into overlapping chunks.
@@ -80,7 +118,7 @@ class MeetingAnalyzer:
             
         # For a single result, just return it
         if len(results_list) == 1:
-            return results_list[0]
+            return self._strip_html_markdown(results_list[0])
             
         # For multiple results, we need to consolidate
         combined = ""
@@ -89,6 +127,9 @@ class MeetingAnalyzer:
         seen_points = set()
         
         for result in results_list:
+            # Clean the result
+            result = self._strip_html_markdown(result)
+            
             # Split into points (assuming each point starts with a bullet or number)
             points = []
             current_point = ""
@@ -152,6 +193,7 @@ class MeetingAnalyzer:
                 
                 {'Esta é a parte ' + str(i+1) + ' de ' + str(len(chunks)) + ' da transcrição completa.' if len(chunks) > 1 else ''}
                 Liste no máximo {'3' if len(chunks) > 1 else '5'} insights principais que foram discutidos nesta {'parte da ' if len(chunks) > 1 else ''}reunião.
+                Não use formatação HTML ou markdown na sua resposta.
                 """
                 
                 # Using run method directly to get the response
@@ -198,6 +240,7 @@ class MeetingAnalyzer:
                 - A tarefa a ser realizada
                 - Quem é responsável (se mencionado)
                 - Prazo (se mencionado)
+                Não use formatação HTML ou markdown na sua resposta.
                 """
                 
                 # Using run method directly to get the response
@@ -241,6 +284,7 @@ class MeetingAnalyzer:
                 
                 {'Esta é a parte ' + str(i+1) + ' de ' + str(len(chunks)) + ' da transcrição completa.' if len(chunks) > 1 else ''}
                 Organize os pontos de discussão em uma lista de marcadores (bullet points) clara e concisa.
+                Não use formatação HTML ou markdown na sua resposta.
                 """
                 
                 # Using run method directly to get the response
@@ -281,6 +325,11 @@ class MeetingAnalyzer:
         insights = self.extract_insights(transcript)
         action_items = self.extract_action_items(transcript)
         bullet_points = self.generate_bullet_points(transcript)
+        
+        # Ensure all results are clean, plain text
+        insights = self._strip_html_markdown(insights)
+        action_items = self._strip_html_markdown(action_items)
+        bullet_points = self._strip_html_markdown(bullet_points)
         
         # Return combined results
         return {
