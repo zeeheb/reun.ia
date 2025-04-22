@@ -24,7 +24,6 @@ wheels/
 venv/
 ENV/
 env/
-streamlit_env/
 # Environment Variables
 .env
 .env.local

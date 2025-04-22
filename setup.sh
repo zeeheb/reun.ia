@@ -1,17 +1,15 @@
 #!/bin/bash
 
 # Create a virtual environment
-echo "Creating virtual environment..."
-python -m venv streamlit_env
+python -m venv venv
 
-# Activate virtual environment
-echo "Activating virtual environment..."
-source streamlit_env/bin/activate
+# Activate the virtual environment
+source venv/bin/activate
 
-# Install dependencies 
-echo "Installing dependencies..."
+# Install dependencies
+echo "Installing requirements..."
 pip install -r requirements.txt
 
-# Run the Streamlit app
-echo "Starting Streamlit app..."
-streamlit run streamlit_app.py 
+# Run the FastAPI app
+echo "Starting FastAPI application..."
+uvicorn app:app --reload --host 0.0.0.0 --port 8000 
