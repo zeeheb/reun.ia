@@ -5,6 +5,10 @@ import ffmpeg
 from pydub import AudioSegment
 import speech_recognition as sr
 from openai import OpenAI
+from dotenv import load_dotenv
+
+# Load environment variables from .env file
+load_dotenv()
 
 class AudioTranscriber:
     """Handles transcription of audio files using different methods."""
@@ -21,7 +25,7 @@ class AudioTranscriber:
         # Convert MB to bytes, keeping slightly under the limit for safety
         self.max_chunk_size = max_chunk_size_mb * 1024 * 1024
         if use_openai:
-            self.client = OpenAI(api_key=os.environ.get("OPENAI_API_KEY"))
+            self.client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
     
     def convert_to_wav(self, audio_file_path):
         """Convert audio file to WAV format for compatibility using ffmpeg.
