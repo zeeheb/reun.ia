@@ -4,11 +4,15 @@ import os
 import tempfile
 import shutil
 import time
-from typing import Dict, Optional
-from fastapi import FastAPI, File, UploadFile, HTTPException, Form
+import secrets
+from typing import Dict, Optional, List, Union
+from pydantic import BaseModel, Field
+from fastapi import FastAPI, File, UploadFile, HTTPException, Form, Depends, Header, Request
 from fastapi.responses import JSONResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.security import APIKeyHeader
+from starlette.status import HTTP_403_FORBIDDEN, HTTP_429_TOO_MANY_REQUESTS
 import uvicorn
 from dotenv import load_dotenv
 import pathlib
@@ -32,17 +36,51 @@ os.makedirs(UPLOAD_DIR, exist_ok=True)
 STATIC_DIR = "static"
 os.makedirs(STATIC_DIR, exist_ok=True)
 
+# API Authentication
+API_KEY_NAME = "X-API-Key"
+API_KEY = os.environ.get("API_KEY", secrets.token_urlsafe(32))  # Generate random API key if not provided
+api_key_header = APIKeyHeader(name=API_KEY_NAME, auto_error=False)
+
+print(f"API Key for development: {API_KEY}")
+
+# Rate limiting configuration
+RATE_LIMIT_DURATION = 3600  # 1 hour in seconds
+RATE_LIMIT_REQUESTS = 100   # Number of requests allowed per duration
+# Dictionary to store request counts: {ip_address: (count, timestamp)}
+request_tracker = {}
+
+# Response Models
+class ErrorResponse(BaseModel):
+    detail: str
+    code: int = Field(..., description="HTTP status code")
+    
+class AnalysisResponse(BaseModel):
+    transcript: str = Field(..., description="The transcript of the meeting audio")
+    analysis: Dict = Field(..., description="Analysis results including insights, action items, and bullet points")
+
+class InsightsResponse(BaseModel):
+    insights: str = Field(..., description="Key insights extracted from the meeting transcript")
+
+class ActionItemsResponse(BaseModel):
+    action_items: str = Field(..., description="Action items extracted from the meeting transcript")
+
+class BulletPointsResponse(BaseModel):
+    bullet_points: str = Field(..., description="Bullet point summary of the meeting")
+
 # Initialize FastAPI app
 app = FastAPI(
-    title="Meeting Analysis Agent",
-    description="An AI agent that processes meeting recordings and extracts insights, actions, and summaries.",
-    version="0.1.0",
+    title="Meeting Analysis API",
+    description="API for processing meeting recordings and extracting insights, actions, and summaries",
+    version="1.0.0",
+    docs_url="/api/docs",
+    redoc_url="/api/redoc",
+    openapi_url="/api/openapi.json"
 )
 
 # Configure CORS
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=["*"],  # Specify the domains you want to allow
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -56,8 +94,54 @@ app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
 transcriber = AudioTranscriber(use_openai=True, max_chunk_size_mb=24)
 analyzer = MeetingAnalyzer(model_id="gpt-4o")
 
-@app.post("/analyze-meeting/", response_model=Dict)
-async def analyze_meeting(audio_file: UploadFile = File(...)):
+# API Key validation dependency
+async def get_api_key(api_key: str = Depends(api_key_header)):
+    if api_key == API_KEY:
+        return api_key
+    raise HTTPException(
+        status_code=HTTP_403_FORBIDDEN, 
+        detail="Invalid API key",
+    )
+
+# Rate limiting middleware
+@app.middleware("http")
+async def rate_limit_middleware(request: Request, call_next):
+    # Skip rate limiting for documentation
+    if request.url.path in ["/api/docs", "/api/redoc", "/api/openapi.json", "/static"]:
+        return await call_next(request)
+        
+    # Get client IP
+    client_ip = request.client.host
+    
+    # Check if client has exceeded rate limit
+    current_time = time.time()
+    if client_ip in request_tracker:
+        count, timestamp = request_tracker[client_ip]
+        
+        # Reset count if duration has passed
+        if current_time - timestamp > RATE_LIMIT_DURATION:
+            request_tracker[client_ip] = (1, current_time)
+        # Increment count if within duration
+        elif count < RATE_LIMIT_REQUESTS:
+            request_tracker[client_ip] = (count + 1, timestamp)
+        # Return 429 if rate limit exceeded
+        else:
+            return JSONResponse(
+                status_code=HTTP_429_TOO_MANY_REQUESTS,
+                content={"detail": "Rate limit exceeded", "code": 429},
+            )
+    else:
+        # First request from this client
+        request_tracker[client_ip] = (1, current_time)
+        
+    return await call_next(request)
+
+# API Routes
+@app.post("/api/v1/analyze-meeting", response_model=AnalysisResponse)
+async def analyze_meeting(
+    audio_file: UploadFile = File(...),
+    api_key: str = Depends(get_api_key)
+):
     """
     Process an uploaded meeting audio file and return analysis.
     
@@ -87,29 +171,30 @@ async def analyze_meeting(audio_file: UploadFile = File(...)):
         
         # Step 1: Transcribe the audio
         print("Starting transcription...")
-        # transcript = transcriber.transcribe(temp_file_path) # for now, we'll use a mock transcript
-        transcript = transcript_mock
-        
+        transcript = transcriber.transcribe(temp_file_path) # uncomment for production
+        # transcript = transcript_mock # For development testing
         
         # Check if transcription was successful
         if not transcript or len(transcript.strip()) == 0:
             print("Warning: Empty transcript generated")
-            return {
-                "transcript": "Não foi possível transcrever o áudio. Por favor, verifique a qualidade do áudio e tente novamente.",
-                "analysis": {
-                    "insights": "Não foi possível gerar insights sem transcrição.",
-                    "action_items": "Não foi possível identificar itens de ação sem transcrição.",
-                    "bullet_points": "Não foi possível gerar pontos de resumo sem transcrição."
+            return JSONResponse(
+                status_code=422,
+                content={
+                    "transcript": "Não foi possível transcrever o áudio. Por favor, verifique a qualidade do áudio e tente novamente.",
+                    "analysis": {
+                        "insights": "Não foi possível gerar insights sem transcrição.",
+                        "action_items": "Não foi possível identificar itens de ação sem transcrição.",
+                        "bullet_points": "Não foi possível gerar pontos de resumo sem transcrição."
+                    }
                 }
-            }
+            )
             
         print(f"Transcription complete: {len(transcript)} characters")
         
         # Step 2: Analyze the transcript
         print("Starting analysis...")
-        # analysis_results = analyzer.analyze_transcript(transcript) ## mocked for now
-        analysis_results = analysis_mock
-        print(analysis_results)
+        analysis_results = analyzer.analyze_transcript(transcript) # uncomment for production
+        # analysis_results = analysis_mock # For development testing
         print("Analysis complete")
         
         # Return the full analysis with transcript included
@@ -124,28 +209,20 @@ async def analyze_meeting(audio_file: UploadFile = File(...)):
         
         # Provide more helpful error message for common errors
         if "413: Maximum content size limit" in error_msg:
-            error_msg = "The audio file is too large for the transcription service. The file will be automatically split into smaller chunks for processing."
+            error_msg = "The audio file is too large for the transcription service. Consider using a smaller file."
         
-        # If the error is related to the Agno agent
-        if "Agent" in error_msg:
-            return {
-                "transcript": "O áudio foi transcrito, mas ocorreu um erro durante a análise.",
-                "analysis": {
-                    "insights": "Erro durante análise. Por favor, tente novamente mais tarde.",
-                    "action_items": "Erro durante análise. Por favor, tente novamente mais tarde.",
-                    "bullet_points": "Erro durante análise. Por favor, tente novamente mais tarde."
-                }
-            }
-            
-        raise HTTPException(status_code=500, detail=f"Error processing file: {error_msg}")
+        raise HTTPException(status_code=500, detail=error_msg)
     
     finally:
         # Clean up the temporary file
         if os.path.exists(temp_file_path):
             os.remove(temp_file_path)
 
-@app.post("/extract-insights/", response_model=Dict)
-async def extract_insights(transcript: str = Form(...)):
+@app.post("/api/v1/extract-insights", response_model=InsightsResponse)
+async def extract_insights(
+    transcript: str = Form(...),
+    api_key: str = Depends(get_api_key)
+):
     """
     Extract insights from a meeting transcript.
     
@@ -163,10 +240,13 @@ async def extract_insights(transcript: str = Form(...)):
         return {"insights": insights}
     except Exception as e:
         print(f"Error extracting insights: {str(e)}")
-        return {"insights": "Ocorreu um erro ao analisar os insights da reunião."}
+        raise HTTPException(status_code=500, detail=f"Error extracting insights: {str(e)}")
 
-@app.post("/extract-action-items/", response_model=Dict)
-async def extract_action_items(transcript: str = Form(...)):
+@app.post("/api/v1/extract-action-items", response_model=ActionItemsResponse)
+async def extract_action_items(
+    transcript: str = Form(...),
+    api_key: str = Depends(get_api_key)
+):
     """
     Extract action items from a meeting transcript.
     
@@ -184,10 +264,13 @@ async def extract_action_items(transcript: str = Form(...)):
         return {"action_items": action_items}
     except Exception as e:
         print(f"Error extracting action items: {str(e)}")
-        return {"action_items": "Ocorreu um erro ao analisar os itens de ação da reunião."}
+        raise HTTPException(status_code=500, detail=f"Error extracting action items: {str(e)}")
 
-@app.post("/generate-bullet-points/", response_model=Dict)
-async def generate_bullet_points(transcript: str = Form(...)):
+@app.post("/api/v1/generate-bullet-points", response_model=BulletPointsResponse)
+async def generate_bullet_points(
+    transcript: str = Form(...),
+    api_key: str = Depends(get_api_key)
+):
     """
     Generate bullet points from a meeting transcript.
     
@@ -205,12 +288,31 @@ async def generate_bullet_points(transcript: str = Form(...)):
         return {"bullet_points": bullet_points}
     except Exception as e:
         print(f"Error generating bullet points: {str(e)}")
-        return {"bullet_points": "Ocorreu um erro ao gerar o resumo da reunião."}
+        raise HTTPException(status_code=500, detail=f"Error generating bullet points: {str(e)}")
+
+@app.get("/api/v1/health")
+async def health_check():
+    """
+    Check if the API is up and running.
+    
+    Returns:
+        Dict containing status information
+    """
+    return {
+        "status": "ok",
+        "version": "1.0.0",
+        "timestamp": time.time()
+    }
+
+@app.get("/swagger")
+async def swagger_ui():
+    """Redirect to Swagger UI HTML page"""
+    return RedirectResponse(url="/static/swagger-ui.html")
 
 @app.get("/")
 async def root():
-    """Redirect to static index.html"""
-    return RedirectResponse(url="/static/index.html")
+    """Redirect to API documentation"""
+    return RedirectResponse(url="/api/docs")
 
 if __name__ == "__main__":
     uvicorn.run("app:app", host="0.0.0.0", port=8000, reload=True) 

@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Meeting Analysis API - Example</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 20px;
+      line-height: 1.6;
+    }
+    h1 {
+      color: #333;
+      border-bottom: 1px solid #eee;
+      padding-bottom: 10px;
+      margin-bottom: 20px;
+    }
+    .form-group {
+      margin-bottom: 20px;
+    }
+    label {
+      display: block;
+      margin-bottom: 5px;
+      font-weight: bold;
+    }
+    input[type="text"], textarea {
+      width: 100%;
+      padding: 8px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+    }
+    button {
+      background-color: #4CAF50;
+      color: white;
+      padding: 10px 15px;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+    button:hover {
+      background-color: #45a049;
+    }
+    .api-key-warning {
+      color: #cc0000;
+      margin-top: 5px;
+      font-size: 0.8em;
+    }
+    .result {
+      margin-top: 20px;
+      padding: 15px;
+      background-color: #f5f5f5;
+      border-radius: 4px;
+      white-space: pre-wrap;
+    }
+    .loading {
+      display: none;
+      margin-top: 10px;
+    }
+    .loading.active {
+      display: block;
+    }
+    .tabs {
+      display: flex;
+      border-bottom: 1px solid #ddd;
+      margin-bottom: 20px;
+    }
+    .tab {
+      padding: 10px 15px;
+      cursor: pointer;
+    }
+    .tab.active {
+      border-bottom: 2px solid #4CAF50;
+      font-weight: bold;
+    }
+    .tab-content {
+      display: none;
+    }
+    .tab-content.active {
+      display: block;
+    }
+  </style>
+</head>
+<body>
+  <h1>Meeting Analysis API - Example</h1>
+  
+  <div class="tabs">
+    <div class="tab active" data-tab="analyze">Analyze Meeting</div>
+    <div class="tab" data-tab="insights">Extract Insights</div>
+    <div class="tab" data-tab="actionItems">Extract Action Items</div>
+    <div class="tab" data-tab="bulletPoints">Generate Bullet Points</div>
+  </div>
+  
+  <div class="form-group">
+    <label for="api-key">API Key:</label>
+    <input type="text" id="api-key" placeholder="Enter your API key" />
+    <div class="api-key-warning">Keep your API key secure. Do not share it publicly.</div>
+  </div>
+  
+  <div class="tab-content active" id="analyze-tab">
+    <div class="form-group">
+      <label for="audio-file">Upload Meeting Recording:</label>
+      <input type="file" id="audio-file" accept="audio/*,video/*" />
+      <p>Supported formats: MP3, WAV, MP4, etc.</p>
+    </div>
+    
+    <button id="analyze-btn">Analyze Meeting</button>
+    
+    <div class="loading" id="analyze-loading">Processing... This may take a minute or two depending on the file size.</div>
+    
+    <div class="result" id="analyze-result" style="display: none;">
+      <h3>Results:</h3>
+      <div id="analyze-output"></div>
+    </div>
+  </div>
+  
+  <div class="tab-content" id="insights-tab">
+    <div class="form-group">
+      <label for="insights-transcript">Meeting Transcript:</label>
+      <textarea id="insights-transcript" rows="10" placeholder="Enter meeting transcript here..."></textarea>
+    </div>
+    
+    <button id="insights-btn">Extract Insights</button>
+    
+    <div class="loading" id="insights-loading">Processing...</div>
+    
+    <div class="result" id="insights-result" style="display: none;">
+      <h3>Insights:</h3>
+      <div id="insights-output"></div>
+    </div>
+  </div>
+  
+  <div class="tab-content" id="actionItems-tab">
+    <div class="form-group">
+      <label for="action-items-transcript">Meeting Transcript:</label>
+      <textarea id="action-items-transcript" rows="10" placeholder="Enter meeting transcript here..."></textarea>
+    </div>
+    
+    <button id="action-items-btn">Extract Action Items</button>
+    
+    <div class="loading" id="action-items-loading">Processing...</div>
+    
+    <div class="result" id="action-items-result" style="display: none;">
+      <h3>Action Items:</h3>
+      <div id="action-items-output"></div>
+    </div>
+  </div>
+  
+  <div class="tab-content" id="bulletPoints-tab">
+    <div class="form-group">
+      <label for="bullet-points-transcript">Meeting Transcript:</label>
+      <textarea id="bullet-points-transcript" rows="10" placeholder="Enter meeting transcript here..."></textarea>
+    </div>
+    
+    <button id="bullet-points-btn">Generate Bullet Points</button>
+    
+    <div class="loading" id="bullet-points-loading">Processing...</div>
+    
+    <div class="result" id="bullet-points-result" style="display: none;">
+      <h3>Bullet Points:</h3>
+      <div id="bullet-points-output"></div>
+    </div>
+  </div>
+  
+  <script src="/static/meeting-api-client.js"></script>
+  <script>
+    // Tab functionality
+    document.querySelectorAll('.tab').forEach(tab => {
+      tab.addEventListener('click', () => {
+        // Remove active class from all tabs and tab contents
+        document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+        document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+        
+        // Add active class to clicked tab and corresponding tab content
+        tab.classList.add('active');
+        const tabId = tab.getAttribute('data-tab');
+        document.getElementById(`${tabId}-tab`).classList.add('active');
+      });
+    });
+    
+    // Analyze Meeting
+    document.getElementById('analyze-btn').addEventListener('click', async () => {
+      const apiKey = document.getElementById('api-key').value;
+      const fileInput = document.getElementById('audio-file');
+      const loadingEl = document.getElementById('analyze-loading');
+      const resultEl = document.getElementById('analyze-result');
+      const outputEl = document.getElementById('analyze-output');
+      
+      if (!apiKey) {
+        alert('Please enter your API key');
+        return;
+      }
+      
+      if (!fileInput.files.length) {
+        alert('Please select an audio file');
+        return;
+      }
+      
+      try {
+        // Show loading state
+        loadingEl.classList.add('active');
+        resultEl.style.display = 'none';
+        
+        // Initialize API client
+        const apiClient = new MeetingAPIClient(apiKey);
+        
+        // Analyze meeting
+        const result = await apiClient.analyzeMeeting(fileInput.files[0]);
+        
+        // Display result
+        outputEl.innerHTML = `
+          <h4>Transcript:</h4>
+          <p>${result.transcript.substring(0, 300)}${result.transcript.length > 300 ? '...' : ''}</p>
+          
+          <h4>Insights:</h4>
+          <p>${result.analysis.insights}</p>
+          
+          <h4>Action Items:</h4>
+          <p>${result.analysis.action_items}</p>
+          
+          <h4>Bullet Points:</h4>
+          <p>${result.analysis.bullet_points}</p>
+        `;
+        
+        resultEl.style.display = 'block';
+      } catch (error) {
+        outputEl.innerHTML = `<p style="color: #cc0000;">Error: ${error.message}</p>`;
+        resultEl.style.display = 'block';
+      } finally {
+        loadingEl.classList.remove('active');
+      }
+    });
+    
+    // Extract Insights
+    document.getElementById('insights-btn').addEventListener('click', async () => {
+      const apiKey = document.getElementById('api-key').value;
+      const transcript = document.getElementById('insights-transcript').value;
+      const loadingEl = document.getElementById('insights-loading');
+      const resultEl = document.getElementById('insights-result');
+      const outputEl = document.getElementById('insights-output');
+      
+      if (!apiKey) {
+        alert('Please enter your API key');
+        return;
+      }
+      
+      if (!transcript || transcript.trim().length < 50) {
+        alert('Please enter a transcript with at least 50 characters');
+        return;
+      }
+      
+      try {
+        // Show loading state
+        loadingEl.classList.add('active');
+        resultEl.style.display = 'none';
+        
+        // Initialize API client
+        const apiClient = new MeetingAPIClient(apiKey);
+        
+        // Extract insights
+        const result = await apiClient.extractInsights(transcript);
+        
+        // Display result
+        outputEl.innerHTML = `<p>${result.insights}</p>`;
+        resultEl.style.display = 'block';
+      } catch (error) {
+        outputEl.innerHTML = `<p style="color: #cc0000;">Error: ${error.message}</p>`;
+        resultEl.style.display = 'block';
+      } finally {
+        loadingEl.classList.remove('active');
+      }
+    });
+    
+    // Extract Action Items
+    document.getElementById('action-items-btn').addEventListener('click', async () => {
+      const apiKey = document.getElementById('api-key').value;
+      const transcript = document.getElementById('action-items-transcript').value;
+      const loadingEl = document.getElementById('action-items-loading');
+      const resultEl = document.getElementById('action-items-result');
+      const outputEl = document.getElementById('action-items-output');
+      
+      if (!apiKey) {
+        alert('Please enter your API key');
+        return;
+      }
+      
+      if (!transcript || transcript.trim().length < 50) {
+        alert('Please enter a transcript with at least 50 characters');
+        return;
+      }
+      
+      try {
+        // Show loading state
+        loadingEl.classList.add('active');
+        resultEl.style.display = 'none';
+        
+        // Initialize API client
+        const apiClient = new MeetingAPIClient(apiKey);
+        
+        // Extract action items
+        const result = await apiClient.extractActionItems(transcript);
+        
+        // Display result
+        outputEl.innerHTML = `<p>${result.action_items}</p>`;
+        resultEl.style.display = 'block';
+      } catch (error) {
+        outputEl.innerHTML = `<p style="color: #cc0000;">Error: ${error.message}</p>`;
+        resultEl.style.display = 'block';
+      } finally {
+        loadingEl.classList.remove('active');
+      }
+    });
+    
+    // Generate Bullet Points
+    document.getElementById('bullet-points-btn').addEventListener('click', async () => {
+      const apiKey = document.getElementById('api-key').value;
+      const transcript = document.getElementById('bullet-points-transcript').value;
+      const loadingEl = document.getElementById('bullet-points-loading');
+      const resultEl = document.getElementById('bullet-points-result');
+      const outputEl = document.getElementById('bullet-points-output');
+      
+      if (!apiKey) {
+        alert('Please enter your API key');
+        return;
+      }
+      
+      if (!transcript || transcript.trim().length < 50) {
+        alert('Please enter a transcript with at least 50 characters');
+        return;
+      }
+      
+      try {
+        // Show loading state
+        loadingEl.classList.add('active');
+        resultEl.style.display = 'none';
+        
+        // Initialize API client
+        const apiClient = new MeetingAPIClient(apiKey);
+        
+        // Generate bullet points
+        const result = await apiClient.generateBulletPoints(transcript);
+        
+        // Display result
+        outputEl.innerHTML = `<p>${result.bullet_points}</p>`;
+        resultEl.style.display = 'block';
+      } catch (error) {
+        outputEl.innerHTML = `<p style="color: #cc0000;">Error: ${error.message}</p>`;
+        resultEl.style.display = 'block';
+      } finally {
+        loadingEl.classList.remove('active');
+      }
+    });
+  </script>
+</body>
+</html> 

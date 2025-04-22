@@ -1,6 +1,6 @@
-# Meeting Analysis Agent
+# Meeting Analysis API
 
-An AI agent that processes meeting audio files, transcribes the content, and generates insights, actions, and bullet points from the discussion.
+An AI-powered API service that processes meeting audio files, transcribes the content, and generates insights, actions, and bullet points from the discussion.
 
 ## Features
 
@@ -8,7 +8,13 @@ An AI agent that processes meeting audio files, transcribes the content, and gen
 - Extraction of key insights from meetings
 - Identification of action items
 - Generation of bullet point summaries
+- RESTful API with authentication and rate limiting
 - Support for large audio files (automatically splits files exceeding OpenAI's 25MB limit)
+- JavaScript and TypeScript client libraries for easy integration
+
+## API Documentation
+
+For complete API documentation, see [API_DOCUMENTATION.md](./API_DOCUMENTATION.md).
 
 ## Setup
 
@@ -25,34 +31,95 @@ source venv/bin/activate  # On Windows: venv\Scripts\activate
 pip install -r requirements.txt
 ```
 
-3. Set up your OpenAI API key:
+3. Set up your environment variables:
 
-```bash
-export OPENAI_API_KEY=your_api_key_here
+Create a `.env.local` file in the project root with the following:
+
+```
+OPENAI_API_KEY=your_openai_api_key_here
+API_KEY=your_api_key_for_authentication  # Optional: a random one will be generated if not provided
 ```
 
 ## Usage
 
-1. Start the application:
+### Starting the API server
+
+Start the application:
 
 ```bash
 uvicorn app:app --reload
 ```
 
-2. Open your browser and go to http://localhost:8000
+The API will be available at:
 
-3. Upload a meeting audio file and get the analysis
+- API endpoints: http://localhost:8000/api/v1/
+- API documentation: http://localhost:8000/api/docs
+- Example frontend: http://localhost:8000/static/example.html
 
-## Handling Large Files
+### Using the API
 
-The application can process large audio files that exceed OpenAI's 25MB limit by:
+All API requests require authentication using the `X-API-Key` header:
 
-1. Automatically detecting large files
-2. Splitting them into smaller chunks
-3. Transcribing each chunk separately
-4. Combining the transcripts for analysis
+```
+X-API-Key: your_api_key_here
+```
 
-For extremely large files (100MB+), the processing time may be significant. The UI provides feedback about file size and shows a progress indicator for large files.
+#### Example: Analyze a meeting audio file
+
+```bash
+curl -X POST http://localhost:8000/api/v1/analyze-meeting \
+  -H "X-API-Key: your_api_key_here" \
+  -F "audio_file=@/path/to/meeting_recording.mp3"
+```
+
+#### Example: Extract insights from transcript
+
+```bash
+curl -X POST http://localhost:8000/api/v1/extract-insights \
+  -H "X-API-Key: your_api_key_here" \
+  -F "transcript=This is the meeting transcript text..."
+```
+
+## Client Libraries
+
+### JavaScript
+
+```javascript
+// Initialize the client with your API key
+const apiClient = new MeetingAPIClient("your_api_key_here");
+
+// Analyze a meeting recording
+const fileInput = document.getElementById("audio-file");
+apiClient
+  .analyzeMeeting(fileInput.files[0])
+  .then((result) => {
+    console.log("Transcript:", result.transcript);
+    console.log("Insights:", result.analysis.insights);
+  })
+  .catch((error) => {
+    console.error("Error:", error.message);
+  });
+```
+
+### TypeScript
+
+```typescript
+import { MeetingAPIClient } from "./meeting-api-client";
+
+// Initialize the client with your API key
+const apiClient = new MeetingAPIClient("your_api_key_here");
+
+// Extract action items from a transcript
+const transcript = "Your meeting transcript text here...";
+apiClient
+  .extractActionItems(transcript)
+  .then((result) => {
+    console.log("Action Items:", result.action_items);
+  })
+  .catch((error) => {
+    console.error("Error:", error.message);
+  });
+```
 
 ## Testing
 
@@ -63,3 +130,15 @@ python test_meeting_agent.py path/to/your/audio_file.mp3
 ```
 
 This will process the file and display the transcript, insights, action items, and bullet points in the terminal.
+
+## Deployment
+
+This application is designed to be deployed on any platform that supports Python and FastAPI:
+
+1. Set up your environment variables (especially `OPENAI_API_KEY` and `API_KEY`)
+2. Install dependencies with `pip install -r requirements.txt`
+3. Run with a production ASGI server:
+
+```bash
+gunicorn app:app -k uvicorn.workers.UvicornWorker -w 4 --bind 0.0.0.0:8000
+```

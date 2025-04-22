@@ -1,0 +1,476 @@
+{
+  "openapi": "3.0.2",
+  "info": {
+    "title": "Meeting Analysis API",
+    "description": "An API for processing meeting recordings and extracting insights, actions, and summaries",
+    "version": "1.0.0",
+    "contact": {
+      "name": "API Support",
+      "email": "support@example.com"
+    },
+    "license": {
+      "name": "MIT",
+      "url": "https://opensource.org/licenses/MIT"
+    }
+  },
+  "servers": [
+    {
+      "url": "http://localhost:8000",
+      "description": "Development server"
+    },
+    {
+      "url": "https://api.example.com",
+      "description": "Production server"
+    }
+  ],
+  "paths": {
+    "/api/v1/analyze-meeting": {
+      "post": {
+        "summary": "Analyze Meeting",
+        "description": "Process an uploaded meeting audio file and return analysis",
+        "operationId": "analyzeMeeting",
+        "tags": ["Analysis"],
+        "security": [
+          {
+            "ApiKeyAuth": []
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "audio_file": {
+                    "type": "string",
+                    "format": "binary",
+                    "description": "The audio file of the meeting (MP3, WAV, MP4, etc.)"
+                  }
+                },
+                "required": ["audio_file"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AnalysisResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Invalid API key",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Unprocessable entity",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limit exceeded",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/extract-insights": {
+      "post": {
+        "summary": "Extract Insights",
+        "description": "Extract insights from a meeting transcript",
+        "operationId": "extractInsights",
+        "tags": ["Analysis"],
+        "security": [
+          {
+            "ApiKeyAuth": []
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "transcript": {
+                    "type": "string",
+                    "description": "The text transcript of the meeting"
+                  }
+                },
+                "required": ["transcript"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InsightsResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Invalid API key",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/extract-action-items": {
+      "post": {
+        "summary": "Extract Action Items",
+        "description": "Extract action items from a meeting transcript",
+        "operationId": "extractActionItems",
+        "tags": ["Analysis"],
+        "security": [
+          {
+            "ApiKeyAuth": []
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "transcript": {
+                    "type": "string",
+                    "description": "The text transcript of the meeting"
+                  }
+                },
+                "required": ["transcript"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ActionItemsResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Invalid API key",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/generate-bullet-points": {
+      "post": {
+        "summary": "Generate Bullet Points",
+        "description": "Generate bullet points from a meeting transcript",
+        "operationId": "generateBulletPoints",
+        "tags": ["Analysis"],
+        "security": [
+          {
+            "ApiKeyAuth": []
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "transcript": {
+                    "type": "string",
+                    "description": "The text transcript of the meeting"
+                  }
+                },
+                "required": ["transcript"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BulletPointsResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Invalid API key",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/health": {
+      "get": {
+        "summary": "Health Check",
+        "description": "Check if the API is up and running",
+        "operationId": "healthCheck",
+        "tags": ["System"],
+        "security": [
+          {
+            "ApiKeyAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HealthResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "ApiKeyAuth": {
+        "type": "apiKey",
+        "in": "header",
+        "name": "X-API-Key"
+      }
+    },
+    "schemas": {
+      "ErrorResponse": {
+        "type": "object",
+        "properties": {
+          "detail": {
+            "type": "string",
+            "description": "Error message describing the issue"
+          },
+          "code": {
+            "type": "integer",
+            "description": "HTTP status code",
+            "example": 400
+          }
+        },
+        "required": ["detail", "code"]
+      },
+      "AnalysisResult": {
+        "type": "object",
+        "properties": {
+          "insights": {
+            "type": "string",
+            "description": "Key insights extracted from the meeting"
+          },
+          "action_items": {
+            "type": "string",
+            "description": "Action items identified in the meeting"
+          },
+          "bullet_points": {
+            "type": "string",
+            "description": "Bullet point summary of the meeting"
+          }
+        },
+        "required": ["insights", "action_items", "bullet_points"]
+      },
+      "AnalysisResponse": {
+        "type": "object",
+        "properties": {
+          "transcript": {
+            "type": "string",
+            "description": "The transcript of the meeting audio"
+          },
+          "analysis": {
+            "$ref": "#/components/schemas/AnalysisResult"
+          }
+        },
+        "required": ["transcript", "analysis"]
+      },
+      "InsightsResponse": {
+        "type": "object",
+        "properties": {
+          "insights": {
+            "type": "string",
+            "description": "Key insights extracted from the meeting transcript"
+          }
+        },
+        "required": ["insights"]
+      },
+      "ActionItemsResponse": {
+        "type": "object",
+        "properties": {
+          "action_items": {
+            "type": "string",
+            "description": "Action items extracted from the meeting transcript"
+          }
+        },
+        "required": ["action_items"]
+      },
+      "BulletPointsResponse": {
+        "type": "object",
+        "properties": {
+          "bullet_points": {
+            "type": "string",
+            "description": "Bullet point summary of the meeting"
+          }
+        },
+        "required": ["bullet_points"]
+      },
+      "HealthResponse": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string",
+            "description": "Service status",
+            "example": "ok"
+          },
+          "version": {
+            "type": "string",
+            "description": "Current API version",
+            "example": "1.0.0"
+          },
+          "timestamp": {
+            "type": "number",
+            "description": "Current server timestamp",
+            "example": 1634567890.123
+          }
+        },
+        "required": ["status", "version", "timestamp"]
+      }
+    }
+  },
+  "tags": [
+    {
+      "name": "Analysis",
+      "description": "Meeting analysis operations"
+    },
+    {
+      "name": "System",
+      "description": "System operations"
+    }
+  ]
+} 
