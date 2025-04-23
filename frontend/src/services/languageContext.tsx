@@ -7,7 +7,7 @@ export type Language = 'en' | 'pt-br';
 // Create translations object
 export const translations = {
   'en': {
-    header: 'Meeting Analysis',
+    
     uploadAudio: 'Upload Audio',
     inputTranscript: 'Input Transcript',
     analyzeRecording: 'Analyze Recording',
@@ -23,7 +23,14 @@ export const translations = {
     transcriptInstructions: 'Paste your meeting transcript below',
     extractInsights: 'Extract Insights',
     extractActionItems: 'Extract Action Items',
-    generateBulletPoints: 'Generate Bullet Points'
+    generateBulletPoints: 'Generate Bullet Points',
+    // New translations for sidebar
+    settings: 'Settings',
+    saved: 'Saved',
+    save: 'Save',
+    clear: 'Clear',
+    apiKeyPrivacyNote: 'Your API key is stored locally in your browser and never sent to our servers.',
+    toggleSettings: 'Toggle Settings'
   },
   'pt-br': {
     header: 'Análise de Reunião',
@@ -42,7 +49,14 @@ export const translations = {
     transcriptInstructions: 'Cole a transcrição da sua reunião abaixo',
     extractInsights: 'Extrair Insights',
     extractActionItems: 'Extrair Itens de Ação',
-    generateBulletPoints: 'Gerar Pontos-chave'
+    generateBulletPoints: 'Gerar Pontos-chave',
+    // New translations for sidebar
+    settings: 'Configurações',
+    saved: 'Salvo',
+    save: 'Salvar',
+    clear: 'Limpar',
+    apiKeyPrivacyNote: 'Sua chave de API é armazenada localmente no seu navegador e nunca é enviada para nossos servidores.',
+    toggleSettings: 'Alternar Configurações'
   }
 };
 
