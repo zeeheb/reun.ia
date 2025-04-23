@@ -13,8 +13,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "reun.ia",
-  description: "reun.ia is a tool that helps you analyze your meetings and get insights from them.",
+  title: "reune.ai",
+  description: "reune.ai is a tool that helps you analyze your meetings and get insights from them.",
 };
 
 export default function RootLayout({
