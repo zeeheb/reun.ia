@@ -22,11 +22,11 @@ export default function TranscriptInput({ onAnalyze, isLoading }: TranscriptInpu
 
   return (
     <div className="bg-white shadow rounded-lg p-3 sm:p-4 mb-6">
-      <h2 className="text-base sm:text-lg font-medium text-gray-900 mb-2 sm:mb-3">Analyze Transcript</h2>
+      <h2 className="text-base sm:text-lg font-medium text-gray-900 mb-2 sm:mb-3">{t('analyzeTranscript')}</h2>
       <form onSubmit={handleSubmit}>
         <div className="mb-3 sm:mb-4">
           <label htmlFor="transcript" className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">
-            Meeting Transcript
+            {t('meetingTranscript')}
           </label>
           <textarea
             id="transcript"
@@ -39,14 +39,14 @@ export default function TranscriptInput({ onAnalyze, isLoading }: TranscriptInpu
           />
           {transcript.length > 0 && transcript.length < 50 && (
             <p className="mt-1 text-xs text-red-500">
-              Transcript must be at least 50 characters. Current length: {transcript.length}
+              {t('transcriptLengthError')} {transcript.length}
             </p>
           )}
         </div>
         
         <div className="mb-3 sm:mb-4">
           <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">
-            Analysis Type
+            {t('analysisType')}
           </label>
           <div className="flex flex-wrap space-x-2 sm:space-x-4">
             <label className="inline-flex items-center mb-1">

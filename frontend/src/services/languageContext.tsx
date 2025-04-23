@@ -7,7 +7,7 @@ export type Language = 'en' | 'pt-br';
 // Create translations object
 export const translations = {
   'en': {
-    
+    header: 'Meeting Analysis',
     uploadAudio: 'Upload Audio',
     inputTranscript: 'Input Transcript',
     analyzeRecording: 'Analyze Recording',
@@ -30,7 +30,12 @@ export const translations = {
     save: 'Save',
     clear: 'Clear',
     apiKeyPrivacyNote: 'Your API key is stored locally in your browser and never sent to our servers.',
-    toggleSettings: 'Toggle Settings'
+    toggleSettings: 'Toggle Settings',
+    // New translations for TranscriptInput
+    analyzeTranscript: 'Analyze Transcript',
+    meetingTranscript: 'Meeting Transcript',
+    analysisType: 'Analysis Type',
+    transcriptLengthError: 'Transcript must be at least 50 characters. Current length:'
   },
   'pt-br': {
     header: 'Análise de Reunião',
@@ -56,7 +61,12 @@ export const translations = {
     save: 'Salvar',
     clear: 'Limpar',
     apiKeyPrivacyNote: 'Sua chave de API é armazenada localmente no seu navegador e nunca é enviada para nossos servidores.',
-    toggleSettings: 'Alternar Configurações'
+    toggleSettings: 'Alternar Configurações',
+    // New translations for TranscriptInput
+    analyzeTranscript: 'Analisar Transcrição',
+    meetingTranscript: 'Transcrição da Reunião',
+    analysisType: 'Tipo de Análise',
+    transcriptLengthError: 'A transcrição deve ter pelo menos 50 caracteres. Tamanho atual:'
   }
 };
 
