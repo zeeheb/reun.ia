@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useRef } from 'react';
+import { useLanguage } from '@/services/languageContext';
 
 type AudioUploaderProps = {
   onFileSelect: (file: File) => void;
@@ -8,6 +9,7 @@ type AudioUploaderProps = {
 };
 
 export default function AudioUploader({ onFileSelect, isLoading }: AudioUploaderProps) {
+  const { t } = useLanguage();
   const [dragActive, setDragActive] = useState<boolean>(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -65,7 +67,7 @@ export default function AudioUploader({ onFileSelect, isLoading }: AudioUploader
 
   return (
     <div className="bg-white shadow rounded-lg p-3 sm:p-4 mb-6">
-      <h2 className="text-base sm:text-lg font-medium text-gray-900 mb-2 sm:mb-3">Upload Meeting Recording</h2>
+      <h2 className="text-base sm:text-lg font-medium text-gray-900 mb-2 sm:mb-3">{t('uploadAudio')}</h2>
       
       <div
         className={`border-2 border-dashed rounded-lg p-4 sm:p-6 flex flex-col items-center justify-center cursor-pointer transition-colors ${
@@ -105,9 +107,9 @@ export default function AudioUploader({ onFileSelect, isLoading }: AudioUploader
         />
         
         <p className="mb-1 sm:mb-2 text-xs sm:text-sm text-center text-gray-500">
-          <span className="font-semibold">Click to upload</span> or drag and drop
+          <span className="font-semibold">{t('dropAudioFile')}</span> {t('or')} {t('browseFiles')}
         </p>
-        <p className="text-xs text-center text-gray-500">MP3, WAV, MP4, etc. (max. 100MB)</p>
+        <p className="text-xs text-center text-gray-500">{t('audioFormat')}</p>
       </div>
 
       {selectedFile && (

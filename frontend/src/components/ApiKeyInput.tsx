@@ -1,12 +1,14 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useLanguage } from '@/services/languageContext';
 
 type ApiKeyInputProps = {
   onApiKeyChange: (apiKey: string) => void;
 };
 
 export default function ApiKeyInput({ onApiKeyChange }: ApiKeyInputProps) {
+  const { t } = useLanguage();
   const [apiKey, setApiKey] = useState<string>('');
   const [isSaved, setIsSaved] = useState<boolean>(false);
 
@@ -52,7 +54,7 @@ export default function ApiKeyInput({ onApiKeyChange }: ApiKeyInputProps) {
             type="password"
             value={apiKey}
             onChange={(e) => setApiKey(e.target.value)}
-            placeholder="Enter your API key"
+            placeholder={t('apiKeyPlaceholder')}
             className="w-full sm:flex-grow px-2 sm:px-3 py-1.5 sm:py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 text-xs sm:text-sm"
           />
           {isSaved ? (

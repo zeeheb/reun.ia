@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useLanguage } from '@/services/languageContext';
 
 type TranscriptInputProps = {
   onAnalyze: (transcript: string, type: 'insights' | 'actions' | 'bullets') => void;
@@ -8,6 +9,7 @@ type TranscriptInputProps = {
 };
 
 export default function TranscriptInput({ onAnalyze, isLoading }: TranscriptInputProps) {
+  const { t } = useLanguage();
   const [transcript, setTranscript] = useState<string>('');
   const [analysisType, setAnalysisType] = useState<'insights' | 'actions' | 'bullets'>('insights');
 
@@ -30,7 +32,7 @@ export default function TranscriptInput({ onAnalyze, isLoading }: TranscriptInpu
             id="transcript"
             value={transcript}
             onChange={(e) => setTranscript(e.target.value)}
-            placeholder="Paste your meeting transcript here..."
+            placeholder={t('transcriptInstructions')}
             rows={6}
             className="w-full px-2 sm:px-3 py-1.5 sm:py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 text-xs sm:text-sm"
             disabled={isLoading}
@@ -56,7 +58,7 @@ export default function TranscriptInput({ onAnalyze, isLoading }: TranscriptInpu
                 onChange={() => setAnalysisType('insights')}
                 className="h-3 w-3 sm:h-4 sm:w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded"
               />
-              <span className="ml-1 sm:ml-2 text-xs sm:text-sm text-gray-700">Insights</span>
+              <span className="ml-1 sm:ml-2 text-xs sm:text-sm text-gray-700">{t('insights')}</span>
             </label>
             <label className="inline-flex items-center mb-1">
               <input
@@ -67,7 +69,7 @@ export default function TranscriptInput({ onAnalyze, isLoading }: TranscriptInpu
                 onChange={() => setAnalysisType('actions')}
                 className="h-3 w-3 sm:h-4 sm:w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded"
               />
-              <span className="ml-1 sm:ml-2 text-xs sm:text-sm text-gray-700">Action Items</span>
+              <span className="ml-1 sm:ml-2 text-xs sm:text-sm text-gray-700">{t('actionItems')}</span>
             </label>
             <label className="inline-flex items-center mb-1">
               <input
@@ -78,7 +80,7 @@ export default function TranscriptInput({ onAnalyze, isLoading }: TranscriptInpu
                 onChange={() => setAnalysisType('bullets')}
                 className="h-3 w-3 sm:h-4 sm:w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded"
               />
-              <span className="ml-1 sm:ml-2 text-xs sm:text-sm text-gray-700">Bullet Points</span>
+              <span className="ml-1 sm:ml-2 text-xs sm:text-sm text-gray-700">{t('bulletPoints')}</span>
             </label>
           </div>
         </div>
@@ -99,16 +101,14 @@ export default function TranscriptInput({ onAnalyze, isLoading }: TranscriptInpu
                   <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                   <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                 </svg>
-                Processing...
+                {t('processing')}
               </span>
             ) : (
-              `Analyze ${
-                analysisType === 'insights'
-                  ? 'Insights'
-                  : analysisType === 'actions'
-                  ? 'Action Items'
-                  : 'Bullet Points'
-              }`
+              analysisType === 'insights'
+                ? t('extractInsights')
+                : analysisType === 'actions'
+                ? t('extractActionItems')
+                : t('generateBulletPoints')
             )}
           </button>
         </div>
