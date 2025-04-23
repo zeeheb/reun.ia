@@ -6,6 +6,7 @@ import AudioUploader from '@/components/AudioUploader';
 import TranscriptInput from '@/components/TranscriptInput';
 import AnalysisResults from '@/components/AnalysisResults';
 import LanguageSelector from '@/components/LanguageSelector';
+import Logo from '@/components/Logo';
 import { apiService, AnalysisResponse } from '@/services/api';
 import { useLanguage } from '@/services/languageContext';
 
@@ -113,7 +114,9 @@ export default function Home() {
     <main className="min-h-screen bg-gray-50 flex flex-col">
       <header className="bg-white shadow">
         <div className="max-w-7xl mx-auto py-4 sm:py-6 px-4 sm:px-6 lg:px-8 flex flex-wrap justify-between items-center">
-          <h1 className="text-xl sm:text-2xl font-bold text-gray-900 break-words">{t('header')}</h1>
+          <div className="flex items-center">
+            <Logo />
+          </div>
           <div className="flex items-center space-x-4">
             <LanguageSelector />
             <a
